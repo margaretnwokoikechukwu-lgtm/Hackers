@@ -5,23 +5,29 @@
 <title>HACKERS - Code War</title>
 
 <style>
-body 
-#matrixCanvas{ position:fixed; top:0; left:0; width:100%; height:100%; z-index:-1; }
-
-<canvas id="matrixCanvas"></canvas>{
+body{
     margin:0;
-    font-family: 'Courier New', monospace;
-    background: linear-gradient(135deg,#000814,#001d3d);
+    font-family:'Courier New', monospace;
+    background:linear-gradient(135deg,#000814,#001d3d);
     color:#00f5d4;
 }
 
-h1 {
+#matrixCanvas{
+    position:fixed;
+    top:0;
+    left:0;
+    width:100%;
+    height:100%;
+    z-index:-1;
+}
+
+h1{
     text-align:center;
     padding:15px;
     text-shadow:0 0 10px #00f5d4;
 }
 
-.panel {
+.panel{
     background:#001d3d;
     border:1px solid #00f5d4;
     border-radius:12px;
@@ -30,7 +36,7 @@ h1 {
     box-shadow:0 0 15px #00f5d4;
 }
 
-input, select {
+input,select{
     width:100%;
     padding:10px;
     margin:5px 0;
@@ -40,7 +46,7 @@ input, select {
     border-radius:8px;
 }
 
-button {
+button{
     width:100%;
     padding:12px;
     margin-top:10px;
@@ -50,20 +56,15 @@ button {
     border:none;
     border-radius:8px;
     cursor:pointer;
-    transition:0.3s;
 }
 
-button:hover {
-    box-shadow:0 0 20px #00f5d4;
-}
-
-.dashboard {
+.dashboard{
     display:flex;
     justify-content:space-around;
     flex-wrap:wrap;
 }
 
-.statBox {
+.statBox{
     background:#000814;
     padding:10px;
     margin:5px;
@@ -73,7 +74,7 @@ button:hover {
     flex:1;
 }
 
-.log {
+.log{
     height:200px;
     overflow-y:auto;
     background:#000814;
@@ -82,21 +83,13 @@ button:hover {
     font-size:13px;
 }
 
-.win {
-    animation:flash 0.5s infinite alternate;
-}
-
-@keyframes flash {
-    from { box-shadow:0 0 5px #00f5d4; }
-    to { box-shadow:0 0 25px #00f5d4; }
-}
-
-.hidden {
-    display:none;
-}
+.hidden{display:none;}
 </style>
 </head>
+
 <body>
+
+<canvas id="matrixCanvas"></canvas>
 
 <h1>HACKERS - CODE WAR</h1>
 
@@ -114,9 +107,8 @@ button:hover {
 <div id="gamePanel" class="hidden">
 
 <div class="panel dashboard">
-<div
 <div class="statBox">Turn<br><span id="turnIndicator">YOU</span></div>
- class="statBox">Round<br><span id="round">1</span></div>
+<div class="statBox">Round<br><span id="round">1</span></div>
 <div class="statBox">You<br><span id="playerScore">0</span></div>
 <div class="statBox">Computer<br><span id="computerScore">0</span></div>
 </div>
@@ -145,58 +137,42 @@ button:hover {
 </div>
 
 <script>
-// MATRIX BACKGROUND SYSTEM
 
-setTurn("YOU");
+// MATRIX BACKGROUND
+let canvas=document.getElementById("matrixCanvas");
+let ctx=canvas.getContext("2d");
+canvas.width=window.innerWidth;
+canvas.height=window.innerHeight;
 
-setTurn("AI");
-
-let canvas = document.getElementById("matrixCanvas");
-let ctx = canvas.getContext("2d");
-
-canvas.width = window.innerWidth;
-canvas.height = window.innerHeight;
-
-let letters = "01";
-letters = letters.split("");
-
-let fontSize = 14;
-let columns = canvas.width / fontSize;
-let drops = [];
-
-for(let x = 0; x < columns; x++)
-    drops[x] = 1;
+let letters="01".split("");
+let fontSize=14;
+let columns=canvas.width/fontSize;
+let drops=[];
+for(let x=0;x<columns;x++) drops[x]=1;
 
 function drawMatrix(){
+ctx.fillStyle="rgba(0,0,0,0.05)";
+ctx.fillRect(0,0,canvas.width,canvas.height);
+ctx.fillStyle="#00f5d4";
+ctx.font=fontSize+"px monospace";
 
-    ctx.fillStyle = "rgba(0, 0, 0, 0.05)";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-    ctx.fillStyle = "#00f5d4";
-    ctx.font = fontSize + "px monospace";
-
-    for(let i = 0; i < drops.length; i++){
-
-        let text = letters[Math.floor(Math.random()*letters.length)];
-        ctx.fillText(text, i*fontSize, drops[i]*fontSize);
-
-        if(drops[i]*fontSize > canvas.height && Math.random() > 0.975)
-            drops[i] = 0;
-
-        drops[i]++;
-    }
+for(let i=0;i<drops.length;i++){
+let text=letters[Math.floor(Math.random()*letters.length)];
+ctx.fillText(text,i*fontSize,drops[i]*fontSize);
+if(drops[i]*fontSize>canvas.height && Math.random()>0.975) drops[i]=0;
+drops[i]++;
 }
+}
+setInterval(drawMatrix,33);
 
-setInterval(drawMatrix, 33);
+// GAME LOGIC
 let playerSecret="";
 let computerSecret="";
 let difficulty="";
-let candidates=[];
-let computerGuess="";
 let round=1;
 let playerScore=0;
 let computerScore=0;
-let usedGuesses=[];
+let computerGuess="";
 
 function startGame(){
 playerSecret=document.getElementById("playerSecret").value;
@@ -208,19 +184,17 @@ return;
 }
 
 computerSecret=generateCode();
-generateCandidates();
 
 document.getElementById("setupPanel").classList.add("hidden");
 document.getElementById("gamePanel").classList.remove("hidden");
 
-log("Battle Started - Difficulty: "+difficulty);
+log("Battle Started - "+difficulty.toUpperCase());
 }
 
 function validCode(code){
-if(code.length!==4) return false;
-if(new Set(code).size!==4) return false;
-if(!/^\d+$/.test(code)) return false;
-return true;
+return code.length===4 &&
+new Set(code).size===4 &&
+/^\d+$/.test(code);
 }
 
 function generateCode(){
@@ -234,8 +208,7 @@ return result;
 }
 
 function calculateResult(secret,guess){
-let dead=0;
-let injured=0;
+let dead=0,injured=0;
 for(let i=0;i<4;i++){
 if(guess[i]===secret[i]) dead++;
 else if(secret.includes(guess[i])) injured++;
@@ -245,20 +218,18 @@ return {dead,injured};
 
 function playerTurn(){
 let guess=document.getElementById("playerGuess").value;
-
 if(!validCode(guess)){
 alert("Invalid Guess");
 return;
 }
 
 let result=calculateResult(computerSecret,guess);
-
 log("YOU → "+guess+" | "+result.dead+"D "+result.injured+"I");
 
 if(result.dead===4){
 playerScore++;
 updateStats();
-victory("YOU WIN THIS ROUND!");
+log("YOU WIN ROUND!");
 return;
 }
 
@@ -266,79 +237,9 @@ computerPlay();
 }
 
 function computerPlay(){
-
-if(difficulty==="easy"){
-do{ computerGuess=generateCode(); }
-while(usedGuesses.includes(computerGuess));
-}
-
-function computerPlay(){
-
-if(difficulty==="easy"){
-    do{
-        computerGuess=generateCode();
-    }while(usedGuesses.includes(computerGuess));
-}
-
-else if(difficulty==="normal"){
-    computerGuess=candidates[Math.floor(Math.random()*candidates.length)];
-}
-
-else if(difficulty==="hard"){
-
-    if(candidates.length===0){
-        computerGuess=generateCode();
-    } else {
-        computerGuess=findBestGuess();
-    }
-
-function setTurn(player){
-    document.getElementById("turnIndicator").innerText = player;
-}
-
-    log("AI Strategic Mode Activated...");
-}
-
-usedGuesses.push(computerGuess);
-
+computerGuess=generateCode();
 document.getElementById("computerGuessDisplay").innerText=
 "Computer attacks: "+computerGuess;
-}function findBestGuess(){
-
-let bestGuess=candidates[0];
-let bestScore=Infinity;
-
-for(let guess of candidates){
-
-    let scoreMap={};
-
-    for(let possible of candidates){
-        let result=calculateResult(possible,guess);
-        let key=result.dead+"-"+result.injured;
-
-        if(!scoreMap[key]) scoreMap[key]=0;
-        scoreMap[key]++;
-    }
-
-    let worstCase=Math.max(...Object.values(scoreMap));
-
-    if(worstCase<bestScore){
-        bestScore=worstCase;
-        bestGuess=guess;
-    }
-}
-
-return bestGuess;
-}
-
-usedGuesses.push(computerGuess);
-
-document.getElementById("computerGuessDisplay").innerText=
-"Computer attacks: "+computerGuess;
-
-if(difficulty==="hard"){
-log("AI scanning "+candidates.length+" possibilities...");
-}
 }
 
 function computerTurn(){
@@ -355,52 +256,18 @@ log("CPU → "+computerGuess+" | "+dead+"D "+injured+"I");
 if(dead===4){
 computerScore++;
 updateStats();
-victory("COMPUTER WINS THIS ROUND!");
+log("COMPUTER WINS ROUND!");
 return;
 }
 
-filterCandidates(computerGuess,dead,injured);
 round++;
 updateStats();
-}
-
-function generateCandidates(){
-candidates=[];
-for(let i=0;i<10000;i++){
-let code=i.toString().padStart(4,"0");
-if(validCode(code)) candidates.push(code);
-}
-}
-
-function filterCandidates(guess,dead,injured){
-candidates=candidates.filter(code=>{
-let result=calculateResult(code,guess);
-return result.dead===dead && result.injured===injured;
-});
 }
 
 function updateStats(){
 document.getElementById("round").innerText=round;
 document.getElementById("playerScore").innerText=playerScore;
 document.getElementById("computerScore").innerText=computerScore;
-}
-
-function victory(text){
-log(text);
-document.body.classList.add("win");
-setTimeout(()=>{
-document.body.classList.remove("win");
-resetRound();
-},2000);
-}
-
-function resetRound(){
-round=1;
-usedGuesses=[];
-generateCandidates();
-computerSecret=generateCode();
-updateStats();
-log("New Round Started");
 }
 
 function resetGame(){
