@@ -1,224 +1,220 @@
 <!DOCTYPE html>
 <html>
 <head>
-<meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Hacker's</title>
-
+<title>Hackers Code Battle</title>
 <style>
-body{
-    margin:0;
-    background:#0d1117;
-    color:#00ff88;
-    font-family:Consolas, monospace;
-    text-align:center;
+body {
+    font-family: Arial;
+    background: #0f172a;
+    color: white;
+    text-align: center;
+    padding: 20px;
 }
-
-h1{
-    padding-top:20px;
-    letter-spacing:3px;
+.container {
+    max-width: 400px;
+    margin: auto;
 }
-
-.container{
-    background:#161b22;
-    padding:20px;
-    border-radius:12px;
-    box-shadow:0 0 20px #00ff88;
-    max-width:420px;
-    margin:20px auto;
+input, button, select {
+    padding: 10px;
+    margin: 5px;
+    width: 100%;
+    border-radius: 8px;
+    border: none;
 }
-
-input{
-    padding:12px;
-    font-size:20px;
-    width:80%;
-    margin:10px 0;
-    text-align:center;
-    border-radius:8px;
-    border:none;
+button {
+    background: #22c55e;
+    color: white;
+    font-weight: bold;
 }
-
-button{
-    padding:10px 20px;
-    font-size:18px;
-    background:#00ff88;
-    border:none;
-    border-radius:8px;
-    cursor:pointer;
-    margin:5px;
+.log {
+    background: #1e293b;
+    padding: 10px;
+    height: 200px;
+    overflow-y: auto;
+    text-align: left;
+    border-radius: 8px;
 }
-
-button:hover{
-    background:#00cc66;
-}
-
-#result{
-    margin-top:15px;
-    font-size:20px;
-    min-height:30px;
-}
-
-#history{
-    margin-top:20px;
-    text-align:left;
-    max-height:200px;
-    overflow-y:auto;
-    background:#0d1117;
-    padding:10px;
-    border-radius:8px;
-}
-
-.win{
-    color:#00ff88;
-    font-weight:bold;
-}
-
-.none{
-    color:#ff4d4d;
-}
-
-.stats{
-    margin-top:10px;
-    font-size:15px;
+.hidden {
+    display: none;
 }
 </style>
 </head>
-
 <body>
-
-<h1>HACKER'S</h1>
 
 <div class="container">
 
-<p>Crack the 4-digit encrypted code</p>
+<h1>Hackers Code Battle</h1>
 
-<input type="text" id="guess" maxlength="4" placeholder="Enter 4 unique digits">
+<div id="startScreen">
+<select id="difficulty">
+<option value="easy">Easy</option>
+<option value="normal">Normal</option>
+<option value="hard">Hard</option>
+</select>
 
-<br>
-<button onclick="checkGuess()">Submit</button>
-<button onclick="restartGame()">Restart</button>
-
-<div id="result"></div>
-
-<div class="stats">
-Attempts: <span id="attempts">0</span> |
-Time: <span id="timer">0</span>s |
-Best Time: <span id="bestTime">--</span>s
+<input type="password" id="playerSecret" placeholder="Enter your 4-digit secret (no repeats)">
+<button onclick="startGame()">Start Game</button>
 </div>
 
-<div id="history"></div>
+<div id="gameScreen" class="hidden">
+
+<h3>Your Turn</h3>
+<input id="playerGuess" placeholder="Guess computer code">
+<button onclick="playerTurn()">Submit Guess</button>
+
+<h3>Computer Turn</h3>
+<p id="computerGuessDisplay"></p>
+<input id="deadInput" placeholder="Dead">
+<input id="injuredInput" placeholder="Injured">
+<button onclick="computerTurn()">Submit Result</button>
+
+<h3>Game Log</h3>
+<div class="log" id="log"></div>
+
+</div>
 
 </div>
 
 <script>
 
-let secret = "";
-let attempts = 0;
-let seconds = 0;
-let timerInterval = null;
-let gameActive = true;
+let playerSecret = "";
+let computerSecret = "";
+let difficulty = "";
+let candidates = [];
+let computerGuess = "";
 
-initGame();
+function startGame() {
 
-function initGame(){
-    secret = generateCode();
-    attempts = 0;
-    seconds = 0;
-    gameActive = true;
+playerSecret = document.getElementById("playerSecret").value;
+difficulty = document.getElementById("difficulty").value;
 
-    document.getElementById("attempts").innerText = 0;
-    document.getElementById("timer").innerText = 0;
-    document.getElementById("history").innerHTML = "";
-    document.getElementById("result").innerHTML = "";
-    document.getElementById("result").className = "";
-    document.getElementById("guess").value = "";
-
-    let savedBest = localStorage.getItem("bestTime");
-    if(savedBest){
-        document.getElementById("bestTime").innerText = savedBest;
-    }
-
-    if(timerInterval){
-        clearInterval(timerInterval);
-    }
-
-    timerInterval = setInterval(function(){
-        if(gameActive){
-            seconds++;
-            document.getElementById("timer").innerText = seconds;
-        }
-    },1000);
+if(!validCode(playerSecret)) {
+    alert("Invalid secret code!");
+    return;
 }
 
-function generateCode(){
-    let numbers = [];
-    while(numbers.length < 4){
-        let n = Math.floor(Math.random()*10);
-        if(!numbers.includes(n)){
-            numbers.push(n);
-        }
-    }
-    return numbers.join('');
+computerSecret = generateCode();
+generateCandidates();
+
+document.getElementById("startScreen").classList.add("hidden");
+document.getElementById("gameScreen").classList.remove("hidden");
+
+log("Game Started! Difficulty: " + difficulty);
 }
 
-function checkGuess(){
-
-    if(!gameActive) return;
-
-    let guess = document.getElementById("guess").value.trim();
-    let resultDiv = document.getElementById("result");
-    let historyDiv = document.getElementById("history");
-
-    if(guess.length !== 4 || isNaN(guess) || new Set(guess).size !== 4){
-        resultDiv.innerHTML = "Enter 4 unique digits!";
-        resultDiv.className = "none";
-        return;
-    }
-
-    attempts++;
-    document.getElementById("attempts").innerText = attempts;
-
-    let dead = 0;
-    let injured = 0;
-
-    for(let i=0;i<4;i++){
-        if(guess[i] === secret[i]){
-            dead++;
-        } else if(secret.includes(guess[i])){
-            injured++;
-        }
-    }
-
-    let message = "";
-
-    if(dead === 0 && injured === 0){
-        message = "None";
-        resultDiv.className = "none";
-    } else {
-        message = dead + " Dead, " + injured + " Injured";
-        resultDiv.className = "";
-    }
-
-    if(dead === 4){
-        message = "ACCESS GRANTED — CODE CRACKED!";
-        resultDiv.className = "win";
-        gameActive = false;
-        clearInterval(timerInterval);
-
-        let best = localStorage.getItem("bestTime");
-        if(!best || seconds < best){
-            localStorage.setItem("bestTime", seconds);
-            document.getElementById("bestTime").innerText = seconds;
-        }
-    }
-
-    resultDiv.innerHTML = message;
-    historyDiv.innerHTML += "<div>"+guess+" → "+message+"</div>";
-    document.getElementById("guess").value="";
+function validCode(code) {
+if(code.length !== 4) return false;
+if(new Set(code).size !== 4) return false;
+if(!/^\d+$/.test(code)) return false;
+return true;
 }
 
-function restartGame(){
-    initGame();
+function generateCode() {
+let digits = "0123456789";
+let result = "";
+while(result.length < 4) {
+let r = digits[Math.floor(Math.random()*10)];
+if(!result.includes(r)) result += r;
+}
+return result;
+}
+
+function calculateResult(secret, guess) {
+let dead = 0;
+let injured = 0;
+
+for(let i=0;i<4;i++) {
+if(guess[i] === secret[i]) dead++;
+else if(secret.includes(guess[i])) injured++;
+}
+
+return {dead, injured};
+}
+
+function playerTurn() {
+
+let guess = document.getElementById("playerGuess").value;
+
+if(!validCode(guess)) {
+alert("Invalid guess!");
+return;
+}
+
+let result = calculateResult(computerSecret, guess);
+
+log("You guessed " + guess + " → " + result.dead + " Dead, " + result.injured + " Injured");
+
+if(result.dead === 4) {
+alert("You Win!");
+location.reload();
+}
+
+computerPlay();
+}
+
+function computerPlay() {
+
+if(difficulty === "easy") {
+computerGuess = generateCode();
+}
+
+else if(difficulty === "normal") {
+computerGuess = candidates[Math.floor(Math.random()*candidates.length)];
+}
+
+else {
+computerGuess = candidates[0];
+}
+
+document.getElementById("computerGuessDisplay").innerText =
+"Computer guesses: " + computerGuess;
+
+if(difficulty === "hard") {
+log("Computer analyzing " + candidates.length + " possible codes...");
+}
+}
+
+function computerTurn() {
+
+let dead = parseInt(document.getElementById("deadInput").value);
+let injured = parseInt(document.getElementById("injuredInput").value);
+
+if(isNaN(dead) || isNaN(injured)) {
+alert("Enter valid numbers");
+return;
+}
+
+log("Computer guessed " + computerGuess + 
+" → " + dead + " Dead, " + injured + " Injured");
+
+if(dead === 4) {
+alert("Computer Wins!");
+location.reload();
+}
+
+filterCandidates(computerGuess, dead, injured);
+}
+
+function generateCandidates() {
+candidates = [];
+for(let i=0;i<10000;i++) {
+let code = i.toString().padStart(4,"0");
+if(validCode(code)) candidates.push(code);
+}
+}
+
+function filterCandidates(guess, dead, injured) {
+candidates = candidates.filter(code => {
+let result = calculateResult(code, guess);
+return result.dead === dead && result.injured === injured;
+});
+}
+
+function log(text) {
+let logDiv = document.getElementById("log");
+logDiv.innerHTML += text + "<br>";
+logDiv.scrollTop = logDiv.scrollHeight;
 }
 
 </script>
