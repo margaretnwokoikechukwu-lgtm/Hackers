@@ -237,9 +237,34 @@ computerPlay();
 }
 
 function computerPlay(){
-computerGuess=generateCode();
-document.getElementById("computerGuessDisplay").innerText=
-"Computer attacks: "+computerGuess;
+
+    setTurn("AI");
+
+    if(difficulty==="easy"){
+        do{
+            computerGuess = generateCode();
+        } while(usedGuesses.includes(computerGuess));
+    }
+
+    else if(difficulty==="normal"){
+        computerGuess = candidates[Math.floor(Math.random()*candidates.length)];
+    }
+
+    else if(difficulty==="hard"){
+
+        if(candidates.length === 0){
+            computerGuess = generateCode();
+        } else {
+            computerGuess = findBestGuess();
+        }
+
+        log("AI analyzing "+candidates.length+" possible codes...");
+    }
+
+    usedGuesses.push(computerGuess);
+
+    document.getElementById("computerGuessDisplay").innerText =
+    "Computer attacks: " + computerGuess;
 }
 
 function computerTurn(){
