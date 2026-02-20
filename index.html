@@ -5,7 +5,8 @@
 <title>HACKERS - Code War</title>
 
 <style>
-body {
+body 
+<canvas id="matrixCanvas"></canvas>{
     margin:0;
     font-family: 'Courier New', monospace;
     background: linear-gradient(135deg,#000814,#001d3d);
@@ -104,6 +105,15 @@ button:hover {
 <option value="hard">Hard</option>
 </select>
 
+#matrixCanvas{
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:100%;
+z-index:-1;
+}
+
 <input type="password" id="playerSecret" placeholder="Enter Your 4 Digit Secret">
 <button onclick="startGame()">Start Battle</button>
 </div>
@@ -111,7 +121,9 @@ button:hover {
 <div id="gamePanel" class="hidden">
 
 <div class="panel dashboard">
-<div class="statBox">Round<br><span id="round">1</span></div>
+<div
+<div class="statBox">Turn<br><span id="turnIndicator">YOU</span></div>
+ class="statBox">Round<br><span id="round">1</span></div>
 <div class="statBox">You<br><span id="playerScore">0</span></div>
 <div class="statBox">Computer<br><span id="computerScore">0</span></div>
 </div>
@@ -140,7 +152,49 @@ button:hover {
 </div>
 
 <script>
+// MATRIX BACKGROUND SYSTEM
 
+setTurn("YOU");
+
+setTurn("AI");
+
+let canvas = document.getElementById("matrixCanvas");
+let ctx = canvas.getContext("2d");
+
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+
+let letters = "01";
+letters = letters.split("");
+
+let fontSize = 14;
+let columns = canvas.width / fontSize;
+let drops = [];
+
+for(let x = 0; x < columns; x++)
+    drops[x] = 1;
+
+function drawMatrix(){
+
+    ctx.fillStyle = "rgba(0, 0, 0, 0.05)";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    ctx.fillStyle = "#00f5d4";
+    ctx.font = fontSize + "px monospace";
+
+    for(let i = 0; i < drops.length; i++){
+
+        let text = letters[Math.floor(Math.random()*letters.length)];
+        ctx.fillText(text, i*fontSize, drops[i]*fontSize);
+
+        if(drops[i]*fontSize > canvas.height && Math.random() > 0.975)
+            drops[i] = 0;
+
+        drops[i]++;
+    }
+}
+
+setInterval(drawMatrix, 33);
 let playerSecret="";
 let computerSecret="";
 let difficulty="";
@@ -244,6 +298,10 @@ else if(difficulty==="hard"){
     } else {
         computerGuess=findBestGuess();
     }
+
+function setTurn(player){
+    document.getElementById("turnIndicator").innerText = player;
+}
 
     log("AI Strategic Mode Activated...");
 }
