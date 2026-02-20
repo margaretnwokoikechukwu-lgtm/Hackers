@@ -2,219 +2,313 @@
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Hackers Code Battle</title>
+<title>HACKERS - Code War</title>
+
 <style>
 body {
-    font-family: Arial;
-    background: #0f172a;
-    color: white;
-    text-align: center;
-    padding: 20px;
+    margin:0;
+    font-family: 'Courier New', monospace;
+    background: linear-gradient(135deg,#000814,#001d3d);
+    color:#00f5d4;
 }
-.container {
-    max-width: 400px;
-    margin: auto;
+
+h1 {
+    text-align:center;
+    padding:15px;
+    text-shadow:0 0 10px #00f5d4;
 }
-input, button, select {
-    padding: 10px;
-    margin: 5px;
-    width: 100%;
-    border-radius: 8px;
-    border: none;
+
+.panel {
+    background:#001d3d;
+    border:1px solid #00f5d4;
+    border-radius:12px;
+    padding:15px;
+    margin:10px;
+    box-shadow:0 0 15px #00f5d4;
 }
+
+input, select {
+    width:100%;
+    padding:10px;
+    margin:5px 0;
+    background:#000814;
+    border:1px solid #00f5d4;
+    color:#00f5d4;
+    border-radius:8px;
+}
+
 button {
-    background: #22c55e;
-    color: white;
-    font-weight: bold;
+    width:100%;
+    padding:12px;
+    margin-top:10px;
+    background:#00f5d4;
+    color:#000;
+    font-weight:bold;
+    border:none;
+    border-radius:8px;
+    cursor:pointer;
+    transition:0.3s;
 }
+
+button:hover {
+    box-shadow:0 0 20px #00f5d4;
+}
+
+.dashboard {
+    display:flex;
+    justify-content:space-around;
+    flex-wrap:wrap;
+}
+
+.statBox {
+    background:#000814;
+    padding:10px;
+    margin:5px;
+    border-radius:8px;
+    border:1px solid #00f5d4;
+    text-align:center;
+    flex:1;
+}
+
 .log {
-    background: #1e293b;
-    padding: 10px;
-    height: 200px;
-    overflow-y: auto;
-    text-align: left;
-    border-radius: 8px;
+    height:200px;
+    overflow-y:auto;
+    background:#000814;
+    padding:10px;
+    border-radius:8px;
+    font-size:13px;
 }
+
+.win {
+    animation:flash 0.5s infinite alternate;
+}
+
+@keyframes flash {
+    from { box-shadow:0 0 5px #00f5d4; }
+    to { box-shadow:0 0 25px #00f5d4; }
+}
+
 .hidden {
-    display: none;
+    display:none;
 }
 </style>
 </head>
 <body>
 
-<div class="container">
+<h1>HACKERS - CODE WAR</h1>
 
-<h1>Hackers Code Battle</h1>
-
-<div id="startScreen">
+<div class="panel" id="setupPanel">
 <select id="difficulty">
 <option value="easy">Easy</option>
 <option value="normal">Normal</option>
 <option value="hard">Hard</option>
 </select>
 
-<input type="password" id="playerSecret" placeholder="Enter your 4-digit secret (no repeats)">
-<button onclick="startGame()">Start Game</button>
+<input type="password" id="playerSecret" placeholder="Enter Your 4 Digit Secret">
+<button onclick="startGame()">Start Battle</button>
 </div>
 
-<div id="gameScreen" class="hidden">
+<div id="gamePanel" class="hidden">
 
+<div class="panel dashboard">
+<div class="statBox">Round<br><span id="round">1</span></div>
+<div class="statBox">You<br><span id="playerScore">0</span></div>
+<div class="statBox">Computer<br><span id="computerScore">0</span></div>
+</div>
+
+<div class="panel">
 <h3>Your Turn</h3>
-<input id="playerGuess" placeholder="Guess computer code">
-<button onclick="playerTurn()">Submit Guess</button>
+<input id="playerGuess" placeholder="Enter Guess">
+<button onclick="playerTurn()">Attack</button>
+</div>
 
+<div class="panel">
 <h3>Computer Turn</h3>
-<p id="computerGuessDisplay"></p>
+<div id="computerGuessDisplay">Waiting...</div>
 <input id="deadInput" placeholder="Dead">
 <input id="injuredInput" placeholder="Injured">
 <button onclick="computerTurn()">Submit Result</button>
-
-<h3>Game Log</h3>
-<div class="log" id="log"></div>
-
 </div>
+
+<div class="panel">
+<h3>Battle Log</h3>
+<div class="log" id="log"></div>
+</div>
+
+<button onclick="resetGame()">Reset Game</button>
 
 </div>
 
 <script>
 
-let playerSecret = "";
-let computerSecret = "";
-let difficulty = "";
-let candidates = [];
-let computerGuess = "";
+let playerSecret="";
+let computerSecret="";
+let difficulty="";
+let candidates=[];
+let computerGuess="";
+let round=1;
+let playerScore=0;
+let computerScore=0;
+let usedGuesses=[];
 
-function startGame() {
+function startGame(){
+playerSecret=document.getElementById("playerSecret").value;
+difficulty=document.getElementById("difficulty").value;
 
-playerSecret = document.getElementById("playerSecret").value;
-difficulty = document.getElementById("difficulty").value;
-
-if(!validCode(playerSecret)) {
-    alert("Invalid secret code!");
-    return;
+if(!validCode(playerSecret)){
+alert("Invalid Secret Code");
+return;
 }
 
-computerSecret = generateCode();
+computerSecret=generateCode();
 generateCandidates();
 
-document.getElementById("startScreen").classList.add("hidden");
-document.getElementById("gameScreen").classList.remove("hidden");
+document.getElementById("setupPanel").classList.add("hidden");
+document.getElementById("gamePanel").classList.remove("hidden");
 
-log("Game Started! Difficulty: " + difficulty);
+log("Battle Started - Difficulty: "+difficulty);
 }
 
-function validCode(code) {
-if(code.length !== 4) return false;
-if(new Set(code).size !== 4) return false;
+function validCode(code){
+if(code.length!==4) return false;
+if(new Set(code).size!==4) return false;
 if(!/^\d+$/.test(code)) return false;
 return true;
 }
 
-function generateCode() {
-let digits = "0123456789";
-let result = "";
-while(result.length < 4) {
-let r = digits[Math.floor(Math.random()*10)];
-if(!result.includes(r)) result += r;
+function generateCode(){
+let digits="0123456789";
+let result="";
+while(result.length<4){
+let r=digits[Math.floor(Math.random()*10)];
+if(!result.includes(r)) result+=r;
 }
 return result;
 }
 
-function calculateResult(secret, guess) {
-let dead = 0;
-let injured = 0;
-
-for(let i=0;i<4;i++) {
-if(guess[i] === secret[i]) dead++;
+function calculateResult(secret,guess){
+let dead=0;
+let injured=0;
+for(let i=0;i<4;i++){
+if(guess[i]===secret[i]) dead++;
 else if(secret.includes(guess[i])) injured++;
 }
-
-return {dead, injured};
+return {dead,injured};
 }
 
-function playerTurn() {
+function playerTurn(){
+let guess=document.getElementById("playerGuess").value;
 
-let guess = document.getElementById("playerGuess").value;
-
-if(!validCode(guess)) {
-alert("Invalid guess!");
+if(!validCode(guess)){
+alert("Invalid Guess");
 return;
 }
 
-let result = calculateResult(computerSecret, guess);
+let result=calculateResult(computerSecret,guess);
 
-log("You guessed " + guess + " → " + result.dead + " Dead, " + result.injured + " Injured");
+log("YOU → "+guess+" | "+result.dead+"D "+result.injured+"I");
 
-if(result.dead === 4) {
-alert("You Win!");
-location.reload();
+if(result.dead===4){
+playerScore++;
+updateStats();
+victory("YOU WIN THIS ROUND!");
+return;
 }
 
 computerPlay();
 }
 
-function computerPlay() {
+function computerPlay(){
 
-if(difficulty === "easy") {
-computerGuess = generateCode();
+if(difficulty==="easy"){
+do{ computerGuess=generateCode(); }
+while(usedGuesses.includes(computerGuess));
 }
 
-else if(difficulty === "normal") {
-computerGuess = candidates[Math.floor(Math.random()*candidates.length)];
+else{
+computerGuess=candidates[0];
 }
 
-else {
-computerGuess = candidates[0];
-}
+usedGuesses.push(computerGuess);
 
-document.getElementById("computerGuessDisplay").innerText =
-"Computer guesses: " + computerGuess;
+document.getElementById("computerGuessDisplay").innerText=
+"Computer attacks: "+computerGuess;
 
-if(difficulty === "hard") {
-log("Computer analyzing " + candidates.length + " possible codes...");
+if(difficulty==="hard"){
+log("AI scanning "+candidates.length+" possibilities...");
 }
 }
 
-function computerTurn() {
+function computerTurn(){
+let dead=parseInt(document.getElementById("deadInput").value);
+let injured=parseInt(document.getElementById("injuredInput").value);
 
-let dead = parseInt(document.getElementById("deadInput").value);
-let injured = parseInt(document.getElementById("injuredInput").value);
-
-if(isNaN(dead) || isNaN(injured)) {
-alert("Enter valid numbers");
+if(isNaN(dead)||isNaN(injured)){
+alert("Enter valid result");
 return;
 }
 
-log("Computer guessed " + computerGuess + 
-" → " + dead + " Dead, " + injured + " Injured");
+log("CPU → "+computerGuess+" | "+dead+"D "+injured+"I");
 
-if(dead === 4) {
-alert("Computer Wins!");
-location.reload();
+if(dead===4){
+computerScore++;
+updateStats();
+victory("COMPUTER WINS THIS ROUND!");
+return;
 }
 
-filterCandidates(computerGuess, dead, injured);
+filterCandidates(computerGuess,dead,injured);
+round++;
+updateStats();
 }
 
-function generateCandidates() {
-candidates = [];
-for(let i=0;i<10000;i++) {
-let code = i.toString().padStart(4,"0");
+function generateCandidates(){
+candidates=[];
+for(let i=0;i<10000;i++){
+let code=i.toString().padStart(4,"0");
 if(validCode(code)) candidates.push(code);
 }
 }
 
-function filterCandidates(guess, dead, injured) {
-candidates = candidates.filter(code => {
-let result = calculateResult(code, guess);
-return result.dead === dead && result.injured === injured;
+function filterCandidates(guess,dead,injured){
+candidates=candidates.filter(code=>{
+let result=calculateResult(code,guess);
+return result.dead===dead && result.injured===injured;
 });
 }
 
-function log(text) {
-let logDiv = document.getElementById("log");
-logDiv.innerHTML += text + "<br>";
-logDiv.scrollTop = logDiv.scrollHeight;
+function updateStats(){
+document.getElementById("round").innerText=round;
+document.getElementById("playerScore").innerText=playerScore;
+document.getElementById("computerScore").innerText=computerScore;
+}
+
+function victory(text){
+log(text);
+document.body.classList.add("win");
+setTimeout(()=>{
+document.body.classList.remove("win");
+resetRound();
+},2000);
+}
+
+function resetRound(){
+round=1;
+usedGuesses=[];
+generateCandidates();
+computerSecret=generateCode();
+updateStats();
+log("New Round Started");
+}
+
+function resetGame(){
+location.reload();
+}
+
+function log(text){
+let logDiv=document.getElementById("log");
+logDiv.innerHTML+=text+"<br>";
+logDiv.scrollTop=logDiv.scrollHeight;
 }
 
 </script>
