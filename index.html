@@ -225,8 +225,59 @@ do{ computerGuess=generateCode(); }
 while(usedGuesses.includes(computerGuess));
 }
 
-else{
-computerGuess=candidates[0];
+function computerPlay(){
+
+if(difficulty==="easy"){
+    do{
+        computerGuess=generateCode();
+    }while(usedGuesses.includes(computerGuess));
+}
+
+else if(difficulty==="normal"){
+    computerGuess=candidates[Math.floor(Math.random()*candidates.length)];
+}
+
+else if(difficulty==="hard"){
+
+    if(candidates.length===0){
+        computerGuess=generateCode();
+    } else {
+        computerGuess=findBestGuess();
+    }
+
+    log("AI Strategic Mode Activated...");
+}
+
+usedGuesses.push(computerGuess);
+
+document.getElementById("computerGuessDisplay").innerText=
+"Computer attacks: "+computerGuess;
+}function findBestGuess(){
+
+let bestGuess=candidates[0];
+let bestScore=Infinity;
+
+for(let guess of candidates){
+
+    let scoreMap={};
+
+    for(let possible of candidates){
+        let result=calculateResult(possible,guess);
+        let key=result.dead+"-"+result.injured;
+
+        if(!scoreMap[key]) scoreMap[key]=0;
+        scoreMap[key]++;
+    }
+
+    let worstCase=Math.max(...Object.values(scoreMap));
+
+    if(worstCase<bestScore){
+        bestScore=worstCase;
+        bestGuess=guess;
+    }
+}
+
+return bestGuess;
 }
 
 usedGuesses.push(computerGuess);
