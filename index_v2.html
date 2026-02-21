@@ -1,1 +1,306 @@
-<!DOCTYPE html>\n<html lang="en">\n<head>\n    <meta charset="UTF-8">\n    <meta name="viewport" content="width=device-width, initial-scale=1.0">\n    <title>Web Game</title>\n</head>\n<body>\n    <h1>Welcome to the Web Game!</h1>\n    <p>This is a basic template for your web game.</p>\n    <script>\n        // Game logic will go here\n    </script>\n</body>\n</html>
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HACKERS - Code War V2</title>
+
+<style>
+body{
+    margin:0;
+    font-family:'Courier New', monospace;
+    background:linear-gradient(135deg,#000814,#001d3d);
+    color:#00f5d4;
+}
+
+h1{
+    text-align:center;
+    padding:15px;
+    text-shadow:0 0 15px #00f5d4;
+}
+
+.panel{
+    background:#001d3d;
+    border:1px solid #00f5d4;
+    border-radius:12px;
+    padding:15px;
+    margin:10px;
+    box-shadow:0 0 15px #00f5d4;
+    animation:fadeIn 0.6s ease-in-out;
+}
+
+@keyframes fadeIn{
+from{opacity:0;transform:translateY(10px);}
+to{opacity:1;transform:translateY(0);}
+}
+
+input,select{
+    width:100%;
+    padding:10px;
+    margin:5px 0;
+    background:#000814;
+    border:1px solid #00f5d4;
+    color:#00f5d4;
+    border-radius:8px;
+}
+
+button{
+    width:100%;
+    padding:12px;
+    margin-top:10px;
+    background:#00f5d4;
+    color:#000;
+    font-weight:bold;
+    border:none;
+    border-radius:8px;
+    cursor:pointer;
+    transition:0.3s;
+}
+
+button:hover{
+    transform:scale(1.05);
+    box-shadow:0 0 15px #00f5d4;
+}
+
+.dashboard{
+    display:flex;
+    justify-content:space-around;
+    flex-wrap:wrap;
+}
+
+.statBox{
+    background:#000814;
+    padding:10px;
+    margin:5px;
+    border-radius:8px;
+    border:1px solid #00f5d4;
+    text-align:center;
+    flex:1;
+}
+
+.log{
+    height:180px;
+    overflow-y:auto;
+    background:#000814;
+    padding:10px;
+    border-radius:8px;
+    font-size:13px;
+}
+
+.hidden{display:none;}
+
+.winFlash{
+animation:flash 0.5s alternate 6;
+}
+
+@keyframes flash{
+from{background:#001d3d;}
+to{background:#00f5d4;color:#000;}
+}
+</style>
+</head>
+
+<body>
+
+<h1>HACKERS - CODE WAR</h1>
+
+<div class="panel" id="setupPanel">
+
+<select id="difficulty">
+<option value="easy">Easy</option>
+<option value="normal">Normal</option>
+<option value="hard">Hard</option>
+</select>
+
+<input type="password" id="playerSecret" placeholder="Enter Your 4 Digit Secret">
+
+<button onclick="startGame()">Start Battle</button>
+<button onclick="showTutorial()">Game Tutorial</button>
+
+</div>
+
+<div id="tutorialPanel" class="panel hidden">
+<h3>HOW TO PLAY</h3>
+<p>
+Dead = correct number in correct position.<br>
+Injured = correct number but wrong position.<br>
+Example:<br>
+Secret: 0567<br>
+Guess: 7650<br>
+Result: 0 Dead, 4 Injured
+</p>
+<button onclick="hideTutorial()">Close</button>
+</div>
+
+<div id="gamePanel" class="hidden">
+
+<div class="panel dashboard">
+<div class="statBox">Turn<br><span id="turnIndicator">YOU</span></div>
+<div class="statBox">Round<br><span id="round">1</span></div>
+<div class="statBox">You<br><span id="playerScore">0</span></div>
+<div class="statBox">Computer<br><span id="computerScore">0</span></div>
+</div>
+
+<div class="panel">
+<h3>Your Turn</h3>
+<input id="playerGuess" placeholder="Enter Guess">
+<button onclick="playerTurn()">Attack</button>
+</div>
+
+<div class="panel">
+<h3>Computer Turn</h3>
+<div id="computerGuessDisplay">Waiting...</div>
+<input id="deadInput" placeholder="Dead">
+<input id="injuredInput" placeholder="Injured">
+<button onclick="computerTurn()">Submit Result</button>
+</div>
+
+<div class="panel">
+<h3>Battle Log</h3>
+<div class="log" id="log"></div>
+</div>
+
+<button onclick="resetGame()">Reset Game</button>
+
+</div>
+
+<audio id="clickSound" src="https://assets.mixkit.co/sfx/preview/mixkit-select-click-1109.mp3"></audio>
+<audio id="winSound" src="https://assets.mixkit.co/sfx/preview/mixkit-arcade-game-complete-2059.mp3"></audio>
+
+<script>
+
+let playerSecret="";
+let computerSecret="";
+let round=1;
+let playerScore=0;
+let computerScore=0;
+let computerGuess="";
+
+function showTutorial(){
+document.getElementById("tutorialPanel").classList.remove("hidden");
+}
+
+function hideTutorial(){
+document.getElementById("tutorialPanel").classList.add("hidden");
+}
+
+function startGame(){
+playerSecret=document.getElementById("playerSecret").value;
+
+if(!validCode(playerSecret)){
+alert("Invalid Secret Code");
+return;
+}
+
+computerSecret=generateCode();
+
+document.getElementById("setupPanel").classList.add("hidden");
+document.getElementById("gamePanel").classList.remove("hidden");
+
+log("Battle Started!");
+}
+
+function validCode(code){
+return code.length===4 &&
+new Set(code).size===4 &&
+/^\d+$/.test(code);
+}
+
+function generateCode(){
+let digits="0123456789";
+let result="";
+while(result.length<4){
+let r=digits[Math.floor(Math.random()*10)];
+if(!result.includes(r)) result+=r;
+}
+return result;
+}
+
+function calculateResult(secret,guess){
+let dead=0,injured=0;
+for(let i=0;i<4;i++){
+if(guess[i]===secret[i]) dead++;
+else if(secret.includes(guess[i])) injured++;
+}
+return {dead,injured};
+}
+
+function playerTurn(){
+document.getElementById("clickSound").play();
+
+let guess=document.getElementById("playerGuess").value;
+if(!validCode(guess)){
+alert("Invalid Guess");
+return;
+}
+
+let result=calculateResult(computerSecret,guess);
+log("YOU → "+guess+" | "+result.dead+"D "+result.injured+"I");
+
+if(result.dead===4){
+playerScore++;
+winEffect("YOU WIN ROUND!");
+return;
+}
+
+computerPlay();
+}
+
+function computerPlay(){
+computerGuess=generateCode();
+document.getElementById("turnIndicator").innerText="COMPUTER";
+document.getElementById("computerGuessDisplay").innerText=
+"Computer attacks: "+computerGuess;
+}
+
+function computerTurn(){
+let dead=parseInt(document.getElementById("deadInput").value);
+let injured=parseInt(document.getElementById("injuredInput").value);
+
+if(isNaN(dead)||isNaN(injured)){
+alert("Enter valid result");
+return;
+}
+
+log("CPU → "+computerGuess+" | "+dead+"D "+injured+"I");
+
+if(dead===4){
+computerScore++;
+winEffect("COMPUTER WINS ROUND!");
+return;
+}
+
+round++;
+updateStats();
+document.getElementById("turnIndicator").innerText="YOU";
+}
+
+function winEffect(message){
+document.getElementById("winSound").play();
+document.getElementById("gamePanel").classList.add("winFlash");
+log(message);
+updateStats();
+setTimeout(()=>{
+document.getElementById("gamePanel").classList.remove("winFlash");
+},2000);
+}
+
+function updateStats(){
+document.getElementById("round").innerText=round;
+document.getElementById("playerScore").innerText=playerScore;
+document.getElementById("computerScore").innerText=computerScore;
+}
+
+function resetGame(){
+location.reload();
+}
+
+function log(text){
+let logDiv=document.getElementById("log");
+logDiv.innerHTML+=text+"<br>";
+logDiv.scrollTop=logDiv.scrollHeight;
+}
+
+</script>
+
+</body>
+</html>
