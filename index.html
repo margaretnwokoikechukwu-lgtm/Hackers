@@ -1,367 +1,393 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HACKERS - Code War</title>
+
+<style>
+body{
+    margin:0;
+    font-family:'Courier New', monospace;
+    background:linear-gradient(135deg,#000814,#001d3d);
+    color:#00f5d4;
+}
+
+#matrixCanvas{
+    position:fixed;
+    top:0;
+    left:0;
+    width:100%;
+    height:100%;
+    z-index:-1;
+}
+
+h1{
+    text-align:center;
+    padding:15px;
+    text-shadow:0 0 10px #00f5d4;
+}
+
+.panel{
+    background:#001d3d;
+    border:1px solid #00f5d4;
+    border-radius:12px;
+    padding:15px;
+    margin:10px;
+    box-shadow:0 0 15px #00f5d4;
+}
+
+input,select{
+    width:100%;
+    padding:10px;
+    margin:5px 0;
+    background:#000814;
+    border:1px solid #00f5d4;
+    color:#00f5d4;
+    border-radius:8px;
+}
+
+button{
+    width:100%;
+    padding:12px;
+    margin-top:10px;
+    background:#00f5d4;
+    color:#000;
+    font-weight:bold;
+    border:none;
+    border-radius:8px;
+    cursor:pointer;
+}
+
+.dashboard{
+    display:flex;
+    justify-content:space-around;
+    flex-wrap:wrap;
+}
+
+.statBox{
+    background:#000814;
+    padding:10px;
+    margin:5px;
+    border-radius:8px;
+    border:1px solid #00f5d4;
+    text-align:center;
+    flex:1;
+}
+
+.log{
+    height:200px;
+    overflow-y:auto;
+    background:#000814;
+    padding:10px;
+    border-radius:8px;
+    font-size:13px;
+}
+
+.hidden{display:none;}
+
+#overlay{
+    position:fixed;
+    top:0; left:0;
+    width:100%; height:100%;
+    background:rgba(0,0,0,0.8);
+    display:flex;
+    justify-content:center;
+    align-items:center;
+}
+
+#overlayBox{
+    background:#001d3d;
+    padding:30px;
+    border-radius:15px;
+    border:2px solid #00f5d4;
+    text-align:center;
+}
+</style>
+</head>
+
+<body>
+
+<canvas id="matrixCanvas"></canvas>
+
+<h1>HACKERS - CODE WAR</h1>
+
+<div class="panel" id="setupPanel">
+<select id="difficulty">
+<option value="easy">Easy</option>
+<option value="normal">Normal</option>
+<option value="hard">Hard</option>
+</select>
+
+<input type="password" id="playerSecret" placeholder="Enter 4 Unique Digits">
+<button onclick="startGame()">Start Battle</button>
+</div>
+
+<div id="gamePanel" class="hidden">
+
+<div class="panel dashboard">
+<div class="statBox">Turn<br><span id="turnIndicator">YOU</span></div>
+<div class="statBox">Round<br><span id="round">1</span></div>
+<div class="statBox">You<br><span id="playerScore">0</span></div>
+<div class="statBox">Computer<br><span id="computerScore">0</span></div>
+</div>
+
+<div class="panel">
+<h3>Your Turn</h3>
+<input id="playerGuess" placeholder="Enter Guess">
+<button onclick="playerTurn()">Attack</button>
+</div>
+
+<div class="panel">
+<h3>Computer Turn</h3>
+<div id="computerGuessDisplay">Waiting...</div>
+<input id="deadInput" placeholder="Dead">
+<input id="injuredInput" placeholder="Injured">
+<button onclick="computerTurn()">Submit Result</button>
+</div>
+
+<div class="panel">
+<h3>Battle Log</h3>
+<div class="log" id="log"></div>
+</div>
+
+<button onclick="resetGame()">Reset Game</button>
+
+</div>
+
+<div id="overlay" class="hidden">
+<div id="overlayBox">
+<h2 id="resultText"></h2>
+<button onclick="closeOverlay()">Continue</button>
+</div>
+</div>
+
 <script>
+window.addEventListener("DOMContentLoaded", function(){
 
-/* ==========================================================
-   MATRIX BACKGROUND
-========================================================== */
+// MATRIX BACKGROUND
+let canvas=document.getElementById("matrixCanvas");
+let ctx=canvas.getContext("2d");
 
-let canvas = document.getElementById("matrixCanvas");
-let ctx = canvas.getContext("2d");
+canvas.width=window.innerWidth;
+canvas.height=window.innerHeight;
 
-canvas.width = window.innerWidth;
-canvas.height = window.innerHeight;
+let letters="01".split("");
+let fontSize=14;
+let columns=canvas.width/fontSize;
+let drops=[];
+for(let x=0;x<columns;x++) drops[x]=1;
 
-let letters = "01".split("");
-let fontSize = 14;
-let columns = canvas.width / fontSize;
-let drops = [];
-
-for (let x = 0; x < columns; x++) drops[x] = 1;
-
-function drawMatrix() {
-    ctx.fillStyle = "rgba(0,0,0,0.05)";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-    ctx.fillStyle = "#00f5d4";
-    ctx.font = fontSize + "px monospace";
-
-    for (let i = 0; i < drops.length; i++) {
-        let text = letters[Math.floor(Math.random() * letters.length)];
-        ctx.fillText(text, i * fontSize, drops[i] * fontSize);
-
-        if (drops[i] * fontSize > canvas.height && Math.random() > 0.975)
-            drops[i] = 0;
-
-        drops[i]++;
-    }
+function drawMatrix(){
+ctx.fillStyle="rgba(0,0,0,0.05)";
+ctx.fillRect(0,0,canvas.width,canvas.height);
+ctx.fillStyle="#00f5d4";
+ctx.font=fontSize+"px monospace";
+for(let i=0;i<drops.length;i++){
+let text=letters[Math.floor(Math.random()*letters.length)];
+ctx.fillText(text,i*fontSize,drops[i]*fontSize);
+if(drops[i]*fontSize>canvas.height && Math.random()>0.975) drops[i]=0;
+drops[i]++;
 }
-setInterval(drawMatrix, 33);
+}
+setInterval(drawMatrix,33);
 
+// GAME VARIABLES
+let playerSecret="";
+let computerSecret="";
+let difficulty="";
+let round=1;
+let playerScore=0;
+let computerScore=0;
+let computerGuess="";
+let candidates=[];
+let gameActive=false;
+let playerTurnActive=true;
 
-/* ==========================================================
-   GAME VARIABLES
-========================================================== */
+// START GAME
+window.startGame=function(){
+playerSecret=document.getElementById("playerSecret").value;
+difficulty=document.getElementById("difficulty").value;
 
-let playerSecret = "";
-let computerSecret = "";
-let difficulty = "";
-
-let round = 1;
-let playerScore = 0;
-let computerScore = 0;
-
-let computerGuess = "";
-let candidates = [];
-let usedGuesses = [];
-
-let gameActive = false;
-let playerTurnActive = true;
-
-
-/* ==========================================================
-   START GAME
-========================================================== */
-
-function startGame() {
-
-    playerSecret = document.getElementById("playerSecret").value;
-    difficulty = document.getElementById("difficulty").value;
-
-    if (!validCode(playerSecret)) {
-        alert("Invalid Secret Code (4 UNIQUE digits required)");
-        return;
-    }
-
-    generateCandidates();
-    computerSecret = generateCode();
-
-    round = 1;
-    playerScore = 0;
-    computerScore = 0;
-    usedGuesses = [];
-
-    document.getElementById("setupPanel").classList.add("hidden");
-    document.getElementById("gamePanel").classList.remove("hidden");
-
-    log("=== BATTLE STARTED ===");
-    log("Difficulty: " + difficulty.toUpperCase());
-
-    gameActive = true;
-    playerTurnActive = true;
-
-    showTutorial();
+if(!validCode(playerSecret)){
+alert("Enter 4 unique digits.");
+return;
 }
 
+generateCandidates();
+computerSecret=generateCode();
 
-/* ==========================================================
-   VALIDATION
-========================================================== */
+round=1;
+playerScore=0;
+computerScore=0;
 
-function validCode(code) {
-    return code.length === 4 &&
-        new Set(code).size === 4 &&
-        /^\d+$/.test(code);
+document.getElementById("setupPanel").classList.add("hidden");
+document.getElementById("gamePanel").classList.remove("hidden");
+
+log("Battle Started - "+difficulty.toUpperCase());
+gameActive=true;
+playerTurnActive=true;
 }
 
-
-/* ==========================================================
-   RANDOM CODE
-========================================================== */
-
-function generateCode() {
-    let digits = "0123456789";
-    let result = "";
-
-    while (result.length < 4) {
-        let r = digits[Math.floor(Math.random() * 10)];
-        if (!result.includes(r)) result += r;
-    }
-    return result;
+// VALIDATION
+function validCode(code){
+return code.length===4 && new Set(code).size===4 && /^\d+$/.test(code);
 }
 
-
-/* ==========================================================
-   CALCULATE RESULT
-========================================================== */
-
-function calculateResult(secret, guess) {
-    let dead = 0;
-    let injured = 0;
-
-    for (let i = 0; i < 4; i++) {
-        if (guess[i] === secret[i]) dead++;
-        else if (secret.includes(guess[i])) injured++;
-    }
-    return { dead, injured };
+// RANDOM CODE
+function generateCode(){
+let digits="0123456789";
+let result="";
+while(result.length<4){
+let r=digits[Math.floor(Math.random()*10)];
+if(!result.includes(r)) result+=r;
+}
+return result;
 }
 
-
-/* ==========================================================
-   PLAYER TURN
-========================================================== */
-
-function playerTurn() {
-
-    if (!gameActive || !playerTurnActive) return;
-
-    document.getElementById("clickSound").play();
-
-    let guess = document.getElementById("playerGuess").value;
-
-    if (!validCode(guess)) {
-        alert("Invalid Guess");
-        return;
-    }
-
-    let result = calculateResult(computerSecret, guess);
-
-    log("YOU → " + guess + " | " + result.dead + "D " + result.injured + "I");
-
-    if (result.dead === 4) {
-        playerScore++;
-        updateStats();
-        endRound("YOU WIN THIS ROUND!");
-        return;
-    }
-
-    playerTurnActive = false;
-    document.getElementById("turnIndicator").innerText = "AI";
-
-    setTimeout(computerPlay, 800);
-
-    document.getElementById("playerGuess").value = "";
+// CALCULATE
+function calculateResult(secret,guess){
+let dead=0,injured=0;
+for(let i=0;i<4;i++){
+if(guess[i]===secret[i]) dead++;
+else if(secret.includes(guess[i])) injured++;
+}
+return {dead,injured};
 }
 
+// PLAYER TURN
+window.playerTurn=function(){
+if(!gameActive||!playerTurnActive) return;
 
-/* ==========================================================
-   COMPUTER PLAY
-========================================================== */
+let guess=document.getElementById("playerGuess").value;
+if(!validCode(guess)){ alert("Invalid Guess"); return;}
 
-function computerPlay() {
+let result=calculateResult(computerSecret,guess);
+log("YOU → "+guess+" | "+result.dead+"D "+result.injured+"I");
 
-    if (!gameActive) return;
-
-    if (difficulty === "easy") {
-        do {
-            computerGuess = generateCode();
-        } while (usedGuesses.includes(computerGuess));
-    }
-
-    else if (difficulty === "normal") {
-        computerGuess = candidates[Math.floor(Math.random() * candidates.length)];
-    }
-
-    else {
-        computerGuess = findBestGuess();
-        log("AI analyzing " + candidates.length + " possibilities...");
-    }
-
-    usedGuesses.push(computerGuess);
-
-    document.getElementById("computerGuessDisplay").innerText =
-        "Computer attacks: " + computerGuess;
+if(result.dead===4){
+playerScore++;
+updateStats();
+endRound("YOU WIN!");
+return;
 }
 
-
-/* ==========================================================
-   COMPUTER RESULT
-========================================================== */
-
-function computerTurn(){
-
-    if (!gameActive || playerTurnActive) return;
-
-    document.getElementById("clickSound").play();
-
-    let dead = parseInt(document.getElementById("deadInput").value);
-    let injured = parseInt(document.getElementById("injuredInput").value);
-
-    if (isNaN(dead) || isNaN(injured) || dead + injured > 4) {
-        alert("Invalid result numbers");
-        return;
-    }
-
-    log("CPU → " + computerGuess + " | " + dead + "D " + injured + "I");
-
-    if (dead === 4) {
-        computerScore++;
-        updateStats();
-        endRound("COMPUTER WINS THIS ROUND!");
-        return;
-    }
-
-    filterCandidates(computerGuess, dead, injured);
-
-    round++;
-    updateStats();
-
-    playerTurnActive = true;
-    document.getElementById("turnIndicator").innerText = "YOU";
-
-    document.getElementById("deadInput").value = "";
-    document.getElementById("injuredInput").value = "";
+playerTurnActive=false;
+document.getElementById("turnIndicator").innerText="AI";
+setTimeout(computerPlay,800);
+document.getElementById("playerGuess").value="";
 }
 
+// COMPUTER PLAY
+function computerPlay(){
+if(difficulty==="easy") computerGuess=generateCode();
+else if(difficulty==="normal") computerGuess=candidates[Math.floor(Math.random()*candidates.length)];
+else computerGuess=findBestGuess();
 
-/* ==========================================================
-   AI SYSTEM
-========================================================== */
-
-function generateCandidates() {
-    candidates = [];
-    for (let i = 0; i < 10000; i++) {
-        let code = i.toString().padStart(4, "0");
-        if (validCode(code)) candidates.push(code);
-    }
+document.getElementById("computerGuessDisplay").innerText="Computer: "+computerGuess;
 }
 
-function filterCandidates(guess, dead, injured) {
-    candidates = candidates.filter(code => {
-        let result = calculateResult(code, guess);
-        return result.dead === dead && result.injured === injured;
-    });
-    log("Remaining possibilities: " + candidates.length);
+// COMPUTER RESULT
+window.computerTurn=function(){
+if(!gameActive||playerTurnActive) return;
+
+let dead=parseInt(document.getElementById("deadInput").value);
+let injured=parseInt(document.getElementById("injuredInput").value);
+
+if(isNaN(dead)||isNaN(injured)||dead+injured>4){
+alert("Invalid numbers");
+return;
+}
+
+log("CPU → "+computerGuess+" | "+dead+"D "+injured+"I");
+
+if(dead===4){
+computerScore++;
+updateStats();
+endRound("COMPUTER WINS!");
+return;
+}
+
+filterCandidates(computerGuess,dead,injured);
+
+round++;
+updateStats();
+playerTurnActive=true;
+document.getElementById("turnIndicator").innerText="YOU";
+
+document.getElementById("deadInput").value="";
+document.getElementById("injuredInput").value="";
+}
+
+// AI SYSTEM
+function generateCandidates(){
+candidates=[];
+for(let i=0;i<10000;i++){
+let code=i.toString().padStart(4,"0");
+if(validCode(code)) candidates.push(code);
+}
+}
+
+function filterCandidates(guess,dead,injured){
+candidates=candidates.filter(code=>{
+let result=calculateResult(code,guess);
+return result.dead===dead && result.injured===injured;
+});
 }
 
 function findBestGuess(){
-    let bestGuess = candidates[0];
-    let bestScore = Infinity;
-
-    for(let guess of candidates.slice(0,40)){
-        let scoreMap = {};
-
-        for(let possible of candidates){
-            let result = calculateResult(possible, guess);
-            let key = result.dead+"-"+result.injured;
-            if(!scoreMap[key]) scoreMap[key]=0;
-            scoreMap[key]++;
-        }
-
-        let worstCase = Math.max(...Object.values(scoreMap));
-        if(worstCase < bestScore){
-            bestScore = worstCase;
-            bestGuess = guess;
-        }
-    }
-    return bestGuess;
+let best=candidates[0];
+let bestScore=Infinity;
+for(let guess of candidates.slice(0,40)){
+let scoreMap={};
+for(let possible of candidates){
+let result=calculateResult(possible,guess);
+let key=result.dead+"-"+result.injured;
+scoreMap[key]=(scoreMap[key]||0)+1;
+}
+let worst=Math.max(...Object.values(scoreMap));
+if(worst<bestScore){ bestScore=worst; best=guess;}
+}
+return best;
 }
 
-
-/* ==========================================================
-   END ROUND
-========================================================== */
-
-function endRound(message){
-
-    gameActive = false;
-    log("=== " + message + " ===");
-
-    document.getElementById("winText").innerText = message;
-    document.getElementById("winOverlay").classList.remove("hidden");
-
-    document.getElementById("winSound").play();
+// UI
+function updateStats(){
+document.getElementById("round").innerText=round;
+document.getElementById("playerScore").innerText=playerScore;
+document.getElementById("computerScore").innerText=computerScore;
 }
 
-
-/* ==========================================================
-   RESET
-========================================================== */
-
-function resetRound() {
-    round = 1;
-    usedGuesses = [];
-    generateCandidates();
-    computerSecret = generateCode();
-    updateStats();
-    log("=== NEW ROUND STARTED ===");
-    gameActive = true;
-    playerTurnActive = true;
+function endRound(text){
+gameActive=false;
+document.getElementById("resultText").innerText=text;
+document.getElementById("overlay").classList.remove("hidden");
 }
 
-function resetGame() {
-    location.reload();
+window.closeOverlay=function(){
+document.getElementById("overlay").classList.add("hidden");
+resetRound();
 }
 
-
-/* ==========================================================
-   UI
-========================================================== */
-
-function updateStats() {
-    document.getElementById("round").innerText = round;
-    document.getElementById("playerScore").innerText = playerScore;
-    document.getElementById("computerScore").innerText = computerScore;
+function resetRound(){
+round=1;
+generateCandidates();
+computerSecret=generateCode();
+updateStats();
+gameActive=true;
+playerTurnActive=true;
 }
 
-function log(text) {
-    let logDiv = document.getElementById("log");
-    logDiv.innerHTML += text + "<br>";
-    logDiv.scrollTop = logDiv.scrollHeight;
+window.resetGame=function(){ location.reload(); }
+
+function log(text){
+let logDiv=document.getElementById("log");
+logDiv.innerHTML+=text+"<br>";
+logDiv.scrollTop=logDiv.scrollHeight;
 }
 
-function closeOverlay(){
-    document.getElementById("winOverlay").classList.add("hidden");
-    resetRound();
-}
-
-
-/* ==========================================================
-   TUTORIAL SYSTEM
-========================================================== */
-
-function showTutorial(){
-    setTimeout(()=>{
-        alert(
-`HOW TO PLAY:
-
-1. Enter a 4-digit secret (no repeated numbers).
-2. Dead = correct number in correct position.
-3. Injured = correct number wrong position.
-4. First to get 4 Dead wins.
-5. Hard mode uses smart AI logic.
-
-Good luck Hacker.`
-        );
-    },1000);
-}
-
+});
 </script>
+
+</body>
+</html>
